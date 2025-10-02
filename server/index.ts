@@ -88,11 +88,12 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // For local development
-  if (process.env.NODE_ENV !== 'production') {
-    const port = config.server.port;
+  // Start server (works for both development and Render deployment)
+  // Only skip if running in Vercel serverless (which has no process.env.PORT)
+  if (process.env.NODE_ENV !== 'production' || process.env.RENDER) {
+    const port = process.env.PORT || config.server.port;
     server.listen({
-      port,
+      port: Number(port),
       host: "0.0.0.0",
       reusePort: true,
     }, () => {
