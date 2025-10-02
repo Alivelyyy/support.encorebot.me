@@ -3,18 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail } from "lucide-react";
 
 interface AuthFormProps {
   onLogin: (email: string, password: string) => void;
   onSignup: (email: string, password: string, fullName: string) => void;
+  onResendVerification?: (email: string) => void;
+  onClearUnverified?: () => void;
+  unverifiedEmail?: string | null;
+  isResending?: boolean;
 }
 
-export default function AuthForm({ onLogin, onSignup }: AuthFormProps) {
+export default function AuthForm({ onLogin, onSignup, onResendVerification, onClearUnverified, unverifiedEmail, isResending }: AuthFormProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleToggleMode = () => {
+    setIsLogin(!isLogin);
+    setEmail("");
+    setPassword("");
+    setFullName("");
+    onClearUnverified?.();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +54,26 @@ export default function AuthForm({ onLogin, onSignup }: AuthFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {unverifiedEmail && (
+          <Alert className="mb-4" data-testid="alert-verification">
+            <Mail className="h-4 w-4" />
+            <AlertDescription className="ml-2">
+              <p className="mb-2" data-testid="text-verification-message">
+                Please verify your email ({unverifiedEmail}) to continue.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onResendVerification?.(unverifiedEmail)}
+                disabled={isResending}
+                data-testid="button-resend-verification"
+              >
+                {isResending ? "Sending..." : "Resend verification email"}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="space-y-2">
@@ -95,7 +129,7 @@ export default function AuthForm({ onLogin, onSignup }: AuthFormProps) {
             type="button"
             variant="ghost"
             className="w-full"
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={handleToggleMode}
             data-testid="button-toggle-mode"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}

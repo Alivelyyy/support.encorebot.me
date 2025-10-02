@@ -8,11 +8,13 @@ import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import TicketDetailPage from "@/pages/TicketDetailPage";
 import AdminPage from "@/pages/AdminPage";
+import VerifyEmailPage from "@/pages/VerifyEmailPage";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LoginPage} />
+      <Route path="/verify-email" component={VerifyEmailPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/ticket/:id" component={TicketDetailPage} />
       <Route path="/admin" component={AdminPage} />

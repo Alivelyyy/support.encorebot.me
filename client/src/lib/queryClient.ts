@@ -1,9 +1,31 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+class APIError extends Error {
+  status: number;
+  requiresVerification?: boolean;
+  email?: string;
+  error?: string;
+
+  constructor(status: number, data: any) {
+    super(data.message || data.error || 'Request failed');
+    this.name = 'APIError';
+    this.status = status;
+    if (data.requiresVerification !== undefined) this.requiresVerification = data.requiresVerification;
+    if (data.email) this.email = data.email;
+    if (data.error) this.error = data.error;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const text = await res.text();
+    let errorData;
+    try {
+      errorData = JSON.parse(text);
+    } catch {
+      errorData = { message: text || res.statusText };
+    }
+    throw new APIError(res.status, errorData);
   }
 }
 
