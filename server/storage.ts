@@ -1,12 +1,16 @@
+import mongoose from 'mongoose';
 import { 
   type User, 
   type InsertUser,
   type Ticket,
   type InsertTicket,
   type Response,
-  type InsertResponse
+  type InsertResponse,
+  UserModel,
+  TicketModel,
+  ResponseModel,
+  AdminEmailModel
 } from "@shared/schema";
-import { randomUUID } from "crypto";
 
 export interface IStorage {
   // User methods
@@ -38,182 +42,205 @@ export interface IStorage {
   isAdminEmail(email: string): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private tickets: Map<string, Ticket>;
-  private responses: Map<string, Response>;
-  private adminEmails: Map<string, any>;
-
-  constructor() {
-    this.users = new Map();
-    this.tickets = new Map();
-    this.responses = new Map();
-    this.adminEmails = new Map();
-  }
-
+export class MongoStorage implements IStorage {
   // User methods
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const user = await UserModel.findById(id).lean();
+    if (!user) return undefined;
+    return {
+      ...user,
+      id: user._id.toString(),
+    } as User;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const user = await UserModel.findOne({ email }).lean();
+    if (!user) return undefined;
+    return {
+      ...user,
+      id: user._id.toString(),
+    } as User;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    const users = await UserModel.find().lean();
+    return users.map(user => ({
+      ...user,
+      id: user._id.toString(),
+    })) as User[];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
-      id,
+    const user = await UserModel.create({
+      ...insertUser,
       isAdmin: insertUser.isAdmin || "false",
       emailVerified: insertUser.emailVerified || "false",
-      verificationToken: insertUser.verificationToken || null,
-      verificationTokenExpiry: insertUser.verificationTokenExpiry || null,
-      createdAt: new Date()
-    };
-    this.users.set(id, user);
-    return user;
+    });
+    return {
+      ...user.toObject(),
+      id: user._id.toString(),
+    } as User;
   }
 
   async updateUserVerification(id: string, token: string, expiry: Date): Promise<User | undefined> {
-    const user = this.users.get(id);
+    const user = await UserModel.findByIdAndUpdate(
+      id,
+      { verificationToken: token, verificationTokenExpiry: expiry },
+      { new: true }
+    ).lean();
     if (!user) return undefined;
-
-    const updatedUser: User = {
+    return {
       ...user,
-      verificationToken: token,
-      verificationTokenExpiry: expiry
-    };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+      id: user._id.toString(),
+    } as User;
   }
 
   async verifyUserEmail(token: string): Promise<User | undefined> {
-    const user = Array.from(this.users.values()).find(
-      (u) => u.verificationToken === token && u.verificationTokenExpiry && u.verificationTokenExpiry > new Date()
-    );
-    
+    const user = await UserModel.findOneAndUpdate(
+      { 
+        verificationToken: token,
+        verificationTokenExpiry: { $gt: new Date() }
+      },
+      { 
+        emailVerified: "true",
+        verificationToken: null,
+        verificationTokenExpiry: null
+      },
+      { new: true }
+    ).lean();
     if (!user) return undefined;
-
-    const verifiedUser: User = {
+    return {
       ...user,
-      emailVerified: "true",
-      verificationToken: null,
-      verificationTokenExpiry: null
-    };
-    this.users.set(user.id, verifiedUser);
-    return verifiedUser;
+      id: user._id.toString(),
+    } as User;
   }
 
   async getUserByVerificationToken(token: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (u) => u.verificationToken === token
-    );
+    const user = await UserModel.findOne({ verificationToken: token }).lean();
+    if (!user) return undefined;
+    return {
+      ...user,
+      id: user._id.toString(),
+    } as User;
   }
 
   // Ticket methods
   async getTicket(id: string): Promise<Ticket | undefined> {
-    return this.tickets.get(id);
+    const ticket = await TicketModel.findById(id).lean();
+    if (!ticket) return undefined;
+    return {
+      ...ticket,
+      id: ticket._id.toString(),
+      userId: ticket.userId.toString(),
+    } as Ticket;
   }
 
   async getAllTickets(): Promise<Ticket[]> {
-    return Array.from(this.tickets.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    const tickets = await TicketModel.find().sort({ createdAt: -1 }).lean();
+    return tickets.map(ticket => ({
+      ...ticket,
+      id: ticket._id.toString(),
+      userId: ticket.userId.toString(),
+    })) as Ticket[];
   }
 
   async getTicketsByUserId(userId: string): Promise<Ticket[]> {
-    return Array.from(this.tickets.values())
-      .filter((ticket) => ticket.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const tickets = await TicketModel.find({ userId }).sort({ createdAt: -1 }).lean();
+    return tickets.map(ticket => ({
+      ...ticket,
+      id: ticket._id.toString(),
+      userId: ticket.userId.toString(),
+    })) as Ticket[];
   }
 
   async createTicket(insertTicket: InsertTicket): Promise<Ticket> {
-    const id = randomUUID();
-    const now = new Date();
-    const ticket: Ticket = {
+    const ticket = await TicketModel.create({
       ...insertTicket,
-      id,
       status: insertTicket.status || "open",
-      createdAt: now,
-      updatedAt: now
-    };
-    this.tickets.set(id, ticket);
-    return ticket;
+    });
+    return {
+      ...ticket.toObject(),
+      id: ticket._id.toString(),
+      userId: ticket.userId.toString(),
+    } as Ticket;
   }
 
   async updateTicketStatus(id: string, status: string): Promise<Ticket | undefined> {
-    const ticket = this.tickets.get(id);
+    const ticket = await TicketModel.findByIdAndUpdate(
+      id,
+      { status, updatedAt: new Date() },
+      { new: true }
+    ).lean();
     if (!ticket) return undefined;
-
-    const updatedTicket: Ticket = {
+    return {
       ...ticket,
-      status,
-      updatedAt: new Date()
-    };
-    this.tickets.set(id, updatedTicket);
-    return updatedTicket;
+      id: ticket._id.toString(),
+      userId: ticket.userId.toString(),
+    } as Ticket;
   }
 
   // Response methods
   async getResponsesByTicketId(ticketId: string): Promise<Response[]> {
-    return Array.from(this.responses.values())
-      .filter((response) => response.ticketId === ticketId)
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    const responses = await ResponseModel.find({ ticketId }).sort({ createdAt: 1 }).lean();
+    return responses.map(response => ({
+      ...response,
+      id: response._id.toString(),
+      ticketId: response.ticketId.toString(),
+      userId: response.userId.toString(),
+    })) as Response[];
   }
 
   async getResponseCountByTicketId(ticketId: string): Promise<number> {
-    return Array.from(this.responses.values())
-      .filter((response) => response.ticketId === ticketId).length;
+    return await ResponseModel.countDocuments({ ticketId });
   }
 
   async createResponse(insertResponse: InsertResponse): Promise<Response> {
-    const id = randomUUID();
-    const response: Response = {
+    const response = await ResponseModel.create({
       ...insertResponse,
-      id,
       isStaff: insertResponse.isStaff || "false",
-      createdAt: new Date()
-    };
-    this.responses.set(id, response);
-    return response;
+    });
+    return {
+      ...response.toObject(),
+      id: response._id.toString(),
+      ticketId: response.ticketId.toString(),
+      userId: response.userId.toString(),
+    } as Response;
   }
 
-  // Admin email methods (in-memory storage)
+  // Admin email methods
   async getAllAdminEmails() {
-    return Array.from(this.adminEmails.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    const emails = await AdminEmailModel.find().sort({ createdAt: -1 }).lean();
+    return emails.map(email => ({
+      ...email,
+      id: email._id.toString(),
+    }));
   }
 
   async getAdminEmailByEmail(email: string) {
-    return Array.from(this.adminEmails.values()).find(
-      (adminEmail) => adminEmail.email === email
-    );
+    const adminEmail = await AdminEmailModel.findOne({ email }).lean();
+    if (!adminEmail) return undefined;
+    return {
+      ...adminEmail,
+      id: adminEmail._id.toString(),
+    };
   }
 
   async createAdminEmail(email: string) {
-    const id = randomUUID();
-    const adminEmail = { id, email, createdAt: new Date() };
-    this.adminEmails.set(id, adminEmail);
-    return adminEmail;
+    const adminEmail = await AdminEmailModel.create({ email });
+    return {
+      ...adminEmail.toObject(),
+      id: adminEmail._id.toString(),
+    };
   }
 
   async deleteAdminEmail(id: string) {
-    this.adminEmails.delete(id);
+    await AdminEmailModel.findByIdAndDelete(id);
   }
 
   async isAdminEmail(email: string): Promise<boolean> {
-    return Array.from(this.adminEmails.values()).some(
-      (adminEmail) => adminEmail.email === email
-    );
+    const count = await AdminEmailModel.countDocuments({ email });
+    return count > 0;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new MongoStorage();
