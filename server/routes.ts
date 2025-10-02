@@ -1,13 +1,239 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertUserSchema, insertTicketSchema, insertResponseSchema } from "@shared/schema";
+import bcrypt from "bcryptjs";
+
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  
+  // Auth routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { email, password, fullName } = insertUserSchema.parse(req.body);
+      
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists" });
+      }
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+      const allUsers = await storage.getAllUsers();
+      const isFirstUser = allUsers.length === 0;
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.createUser({
+        email,
+        password: hashedPassword,
+        fullName,
+        isAdmin: isFirstUser ? "true" : "false"
+      });
+
+      req.session.userId = user.id;
+      res.json({ 
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          fullName: user.fullName, 
+          isAdmin: user.isAdmin 
+        } 
+      });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      req.session.userId = user.id;
+      res.json({ 
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          fullName: user.fullName, 
+          isAdmin: user.isAdmin 
+        } 
+      });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy(() => {
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    res.json({ 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        fullName: user.fullName, 
+        isAdmin: user.isAdmin 
+      } 
+    });
+  });
+
+  // Ticket routes
+  app.get("/api/tickets", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    let tickets;
+    if (user.isAdmin === "true") {
+      tickets = await storage.getAllTickets();
+    } else {
+      tickets = await storage.getTicketsByUserId(req.session.userId);
+    }
+
+    const ticketsWithCounts = await Promise.all(
+      tickets.map(async (ticket) => ({
+        ...ticket,
+        responseCount: await storage.getResponseCountByTicketId(ticket.id),
+      }))
+    );
+
+    res.json({ tickets: ticketsWithCounts });
+  });
+
+  app.get("/api/tickets/:id", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const ticket = await storage.getTicket(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true" && ticket.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    res.json({ ticket });
+  });
+
+  app.post("/api/tickets", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const ticketData = insertTicketSchema.parse({
+        ...req.body,
+        userId: req.session.userId
+      });
+
+      const ticket = await storage.createTicket(ticketData);
+      res.json({ ticket });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  app.patch("/api/tickets/:id/status", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const { status } = req.body;
+    const ticket = await storage.updateTicketStatus(req.params.id, status);
+    
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    res.json({ ticket });
+  });
+
+  // Response routes
+  app.get("/api/tickets/:ticketId/responses", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const ticket = await storage.getTicket(req.params.ticketId);
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true" && ticket.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const responses = await storage.getResponsesByTicketId(req.params.ticketId);
+    res.json({ responses });
+  });
+
+  app.post("/api/tickets/:ticketId/responses", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const ticket = await storage.getTicket(req.params.ticketId);
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true" && ticket.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    try {
+      const responseData = insertResponseSchema.parse({
+        ...req.body,
+        ticketId: req.params.ticketId,
+        userId: req.session.userId,
+        isStaff: user?.isAdmin === "true" ? "true" : "false"
+      });
+
+      const response = await storage.createResponse(responseData);
+      res.json({ response });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
 
   const httpServer = createServer(app);
 

@@ -1,65 +1,64 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import Navbar from "@/components/Navbar";
 import FilterBar from "@/components/FilterBar";
 import StatsCard from "@/components/StatsCard";
 import TicketCard from "@/components/TicketCard";
-import { Ticket, Clock, CheckCircle, Loader } from "lucide-react";
+import { Ticket as TicketIcon, Clock, CheckCircle, Loader } from "lucide-react";
+import type { Ticket } from "@shared/schema";
 
 export default function AdminPage() {
+  const [, setLocation] = useLocation();
   const [statusFilter, setStatusFilter] = useState("all");
   const [serviceFilter, setServiceFilter] = useState("all");
 
-  const mockStats = {
-    total: 142,
-    open: 23,
-    inProgress: 8,
-    resolved: 111,
+  const { data: userData, isLoading: isUserLoading } = useQuery<{ user: any }>({
+    queryKey: ["/api/auth/me"],
+  });
+
+  const { data: ticketsData, isLoading: isTicketsLoading } = useQuery<{ tickets: Ticket[] }>({
+    queryKey: ["/api/tickets"],
+    enabled: !!userData,
+  });
+
+  useEffect(() => {
+    if (!isUserLoading && !userData?.user) {
+      setLocation("/");
+    } else if (!isUserLoading && userData?.user && userData.user.isAdmin !== "true") {
+      setLocation("/dashboard");
+    }
+  }, [isUserLoading, userData, setLocation]);
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/auth/logout", {});
+      return await res.json();
+    },
+    onSuccess: () => {
+      setLocation("/");
+    },
+  });
+
+  if (isUserLoading || isTicketsLoading || !userData?.user || userData.user.isAdmin !== "true") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  const tickets = ticketsData?.tickets || [];
+  
+  const stats = {
+    total: tickets.length,
+    open: tickets.filter(t => t.status === "open").length,
+    inProgress: tickets.filter(t => t.status === "in_progress").length,
+    resolved: tickets.filter(t => t.status === "resolved").length,
   };
 
-  const mockTickets = [
-    {
-      id: "1",
-      title: "Bot not responding to commands",
-      description: "The Encore bot is not responding to any of my commands. I've tried using different prefixes but nothing works.",
-      category: "Bugs",
-      service: "Encore Bot",
-      status: "open" as const,
-      createdAt: new Date(Date.now() - 1000 * 60 * 30),
-      responseCount: 2,
-    },
-    {
-      id: "2",
-      title: "Premium subscription not activating",
-      description: "I purchased premium yesterday but my account still shows as free tier.",
-      category: "Premium",
-      service: "Encore Bot",
-      status: "in_progress" as const,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      responseCount: 5,
-    },
-    {
-      id: "3",
-      title: "Website design consultation",
-      description: "Looking for help with redesigning my portfolio website.",
-      category: "Web Development",
-      service: "Team Epic",
-      status: "resolved" as const,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-      responseCount: 8,
-    },
-    {
-      id: "4",
-      title: "Need help with Discord bot setup",
-      description: "I want to create a custom Discord bot for my server but need guidance on the best approach.",
-      category: "Discord Bots",
-      service: "Team Epic",
-      status: "open" as const,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-      responseCount: 1,
-    },
-  ];
-
-  const filteredTickets = mockTickets.filter((ticket) => {
+  const filteredTickets = tickets.filter((ticket) => {
     if (statusFilter !== "all" && ticket.status !== statusFilter) return false;
     if (serviceFilter !== "all" && ticket.service !== serviceFilter) return false;
     return true;
@@ -68,10 +67,10 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar
-        userName="Admin User"
+        userName={userData.user.fullName}
         isAdmin={true}
-        onLogout={() => console.log("Logout")}
-        onViewDashboard={() => console.log("Dashboard")}
+        onLogout={() => logoutMutation.mutate()}
+        onViewDashboard={() => setLocation("/dashboard")}
       />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8">
@@ -83,25 +82,25 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Total Tickets"
-            value={mockStats.total}
-            icon={Ticket}
+            value={stats.total}
+            icon={TicketIcon}
             description="All time tickets"
           />
           <StatsCard
             title="Open"
-            value={mockStats.open}
+            value={stats.open}
             icon={Clock}
             description="Awaiting response"
           />
           <StatsCard
             title="In Progress"
-            value={mockStats.inProgress}
+            value={stats.inProgress}
             icon={Loader}
             description="Being worked on"
           />
           <StatsCard
             title="Resolved"
-            value={mockStats.resolved}
+            value={stats.resolved}
             icon={CheckCircle}
             description="Successfully resolved"
           />
@@ -126,8 +125,15 @@ export default function AdminPage() {
             {filteredTickets.map((ticket) => (
               <TicketCard
                 key={ticket.id}
-                {...ticket}
-                onClick={() => console.log("View ticket:", ticket.id)}
+                id={ticket.id}
+                title={ticket.title}
+                description={ticket.description}
+                category={ticket.category}
+                service={ticket.service}
+                status={ticket.status as "open" | "in_progress" | "resolved" | "closed"}
+                createdAt={new Date(ticket.createdAt)}
+                responseCount={(ticket as any).responseCount || 0}
+                onClick={() => setLocation(`/ticket/${ticket.id}`)}
               />
             ))}
           </div>
