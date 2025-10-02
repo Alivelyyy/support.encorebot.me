@@ -72,7 +72,7 @@ export async function sendVerificationEmail(
       'Authorization': `Bearer ${resendApiKey}`
     },
     body: JSON.stringify({
-      from: 'EncoreBot Support <onboarding@resend.dev>',
+      from: 'EncoreBot Support <verify@encorebot.me>',
       to: email,
       subject: 'Verify your email address - EncoreBot Support',
       html: htmlBody
