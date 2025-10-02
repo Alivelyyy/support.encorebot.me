@@ -1,6 +1,5 @@
 
-// Import the Express app from the built server
-const app = require('../dist/index.js').default;
+// Vercel serverless function entry point
+import app from '../dist/index.js';
 
-// Export for Vercel
-module.exports = app;
+export default app;
