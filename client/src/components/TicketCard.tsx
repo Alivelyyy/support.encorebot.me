@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MessageSquare } from "lucide-react";
+import { Clock, MessageSquare, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface TicketCardProps {
@@ -42,17 +42,18 @@ export default function TicketCard({
 }: TicketCardProps) {
   return (
     <Card 
-      className="hover-elevate active-elevate-2 cursor-pointer transition-all"
+      className="hover-elevate active-elevate-2 cursor-pointer transition-all duration-300 group overflow-visible relative"
       onClick={onClick}
       data-testid={`card-ticket-${id}`}
     >
-      <CardHeader className="space-y-3">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-chart-2/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
+      <CardHeader className="space-y-3 relative z-10">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg leading-tight" data-testid={`text-ticket-title-${id}`}>
+          <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors duration-200" data-testid={`text-ticket-title-${id}`}>
             {title}
           </CardTitle>
           <Badge 
-            className={statusColors[status]}
+            className={`${statusColors[status]} transition-all duration-200`}
             data-testid={`badge-status-${id}`}
           >
             {statusLabels[status]}
@@ -67,7 +68,7 @@ export default function TicketCard({
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 relative z-10">
         <CardDescription className="line-clamp-2" data-testid={`text-description-${id}`}>
           {description}
         </CardDescription>
@@ -78,12 +79,15 @@ export default function TicketCard({
               {formatDistanceToNow(createdAt, { addSuffix: true })}
             </span>
           </div>
-          {responseCount > 0 && (
-            <div className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              <span data-testid={`text-responses-${id}`}>{responseCount}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {responseCount > 0 && (
+              <div className="flex items-center gap-1">
+                <MessageSquare className="h-4 w-4" />
+                <span data-testid={`text-responses-${id}`}>{responseCount}</span>
+              </div>
+            )}
+            <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-primary" />
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -49,7 +49,9 @@ export class MongoStorage implements IStorage {
     if (!user) return undefined;
     return {
       ...user,
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
     } as User;
   }
 
@@ -58,7 +60,9 @@ export class MongoStorage implements IStorage {
     if (!user) return undefined;
     return {
       ...user,
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
     } as User;
   }
 
@@ -66,7 +70,9 @@ export class MongoStorage implements IStorage {
     const users = await UserModel.find().lean();
     return users.map(user => ({
       ...user,
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
     })) as User[];
   }
 
@@ -79,6 +85,8 @@ export class MongoStorage implements IStorage {
     return {
       ...user.toObject(),
       id: user._id.toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
     } as User;
   }
 
@@ -91,7 +99,9 @@ export class MongoStorage implements IStorage {
     if (!user) return undefined;
     return {
       ...user,
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
     } as User;
   }
 
@@ -111,7 +121,9 @@ export class MongoStorage implements IStorage {
     if (!user) return undefined;
     return {
       ...user,
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
+      verificationToken: undefined,
+      verificationTokenExpiry: undefined,
     } as User;
   }
 
@@ -120,7 +132,9 @@ export class MongoStorage implements IStorage {
     if (!user) return undefined;
     return {
       ...user,
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
     } as User;
   }
 
@@ -130,8 +144,8 @@ export class MongoStorage implements IStorage {
     if (!ticket) return undefined;
     return {
       ...ticket,
-      id: ticket._id.toString(),
-      userId: ticket.userId.toString(),
+      id: (ticket._id as any).toString(),
+      userId: (ticket.userId as any).toString(),
     } as Ticket;
   }
 
@@ -139,8 +153,8 @@ export class MongoStorage implements IStorage {
     const tickets = await TicketModel.find().sort({ createdAt: -1 }).lean();
     return tickets.map(ticket => ({
       ...ticket,
-      id: ticket._id.toString(),
-      userId: ticket.userId.toString(),
+      id: (ticket._id as any).toString(),
+      userId: (ticket.userId as any).toString(),
     })) as Ticket[];
   }
 
@@ -148,8 +162,8 @@ export class MongoStorage implements IStorage {
     const tickets = await TicketModel.find({ userId }).sort({ createdAt: -1 }).lean();
     return tickets.map(ticket => ({
       ...ticket,
-      id: ticket._id.toString(),
-      userId: ticket.userId.toString(),
+      id: (ticket._id as any).toString(),
+      userId: (ticket.userId as any).toString(),
     })) as Ticket[];
   }
 
@@ -161,7 +175,7 @@ export class MongoStorage implements IStorage {
     return {
       ...ticket.toObject(),
       id: ticket._id.toString(),
-      userId: ticket.userId.toString(),
+      userId: (ticket.userId as any).toString(),
     } as Ticket;
   }
 
@@ -174,8 +188,8 @@ export class MongoStorage implements IStorage {
     if (!ticket) return undefined;
     return {
       ...ticket,
-      id: ticket._id.toString(),
-      userId: ticket.userId.toString(),
+      id: (ticket._id as any).toString(),
+      userId: (ticket.userId as any).toString(),
     } as Ticket;
   }
 
@@ -184,9 +198,9 @@ export class MongoStorage implements IStorage {
     const responses = await ResponseModel.find({ ticketId }).sort({ createdAt: 1 }).lean();
     return responses.map(response => ({
       ...response,
-      id: response._id.toString(),
-      ticketId: response.ticketId.toString(),
-      userId: response.userId.toString(),
+      id: (response._id as any).toString(),
+      ticketId: (response.ticketId as any).toString(),
+      userId: (response.userId as any).toString(),
     })) as Response[];
   }
 
@@ -202,8 +216,8 @@ export class MongoStorage implements IStorage {
     return {
       ...response.toObject(),
       id: response._id.toString(),
-      ticketId: response.ticketId.toString(),
-      userId: response.userId.toString(),
+      ticketId: (response.ticketId as any).toString(),
+      userId: (response.userId as any).toString(),
     } as Response;
   }
 
@@ -212,7 +226,7 @@ export class MongoStorage implements IStorage {
     const emails = await AdminEmailModel.find().sort({ createdAt: -1 }).lean();
     return emails.map(email => ({
       ...email,
-      id: email._id.toString(),
+      id: (email._id as any).toString(),
     }));
   }
 
@@ -221,7 +235,7 @@ export class MongoStorage implements IStorage {
     if (!adminEmail) return undefined;
     return {
       ...adminEmail,
-      id: adminEmail._id.toString(),
+      id: (adminEmail._id as any).toString(),
     };
   }
 

@@ -9,6 +9,7 @@ import TicketCard from "@/components/TicketCard";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Ticket } from "@shared/schema";
 
 export default function DashboardPage() {
@@ -52,7 +53,7 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
       toast({
         title: "Ticket created",
-        description: "Your support ticket has been submitted.",
+        description: "Your support ticket has been submitted successfully.",
       });
       setShowCreateDialog(false);
     },
@@ -67,8 +68,21 @@ export default function DashboardPage() {
 
   if (isUserLoading || isTicketsLoading || !userData?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="min-h-screen bg-background">
+        <Navbar
+          userName="Loading..."
+          isAdmin={false}
+          onLogout={() => {}}
+          onCreateTicket={() => {}}
+        />
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 space-y-8">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-64 w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -91,9 +105,9 @@ export default function DashboardPage() {
       
       <HeroSection onCreateTicket={() => setShowCreateDialog(true)} />
       
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 space-y-8">
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">My Tickets</h2>
+      <div id="my-tickets" className="max-w-7xl mx-auto px-4 md:px-6 py-12 space-y-8">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <h2 className="text-3xl font-bold tracking-tight">My Tickets</h2>
           <FilterBar
             selectedStatus={statusFilter}
             onStatusChange={setStatusFilter}
@@ -103,31 +117,48 @@ export default function DashboardPage() {
         </div>
 
         {filteredTickets.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No tickets found</p>
+          <div className="text-center py-20 animate-in fade-in duration-700">
+            <div className="inline-block p-6 rounded-full bg-muted/50 mb-4">
+              <svg className="h-16 w-16 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <p className="text-xl font-medium text-muted-foreground mb-2">No tickets found</p>
+            <p className="text-sm text-muted-foreground mb-6">Create your first support ticket to get started</p>
+            <button 
+              onClick={() => setShowCreateDialog(true)}
+              className="text-primary hover:underline font-medium"
+            >
+              Create a ticket
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTickets.map((ticket) => (
-              <TicketCard
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-500">
+            {filteredTickets.map((ticket, index) => (
+              <div 
                 key={ticket.id}
-                id={ticket.id}
-                title={ticket.title}
-                description={ticket.description}
-                category={ticket.category}
-                service={ticket.service}
-                status={ticket.status as "open" | "in_progress" | "resolved" | "closed"}
-                createdAt={new Date(ticket.createdAt)}
-                responseCount={(ticket as any).responseCount || 0}
-                onClick={() => setLocation(`/ticket/${ticket.id}`)}
-              />
+                className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <TicketCard
+                  id={ticket.id}
+                  title={ticket.title}
+                  description={ticket.description}
+                  category={ticket.category}
+                  service={ticket.service}
+                  status={ticket.status as "open" | "in_progress" | "resolved" | "closed"}
+                  createdAt={new Date(ticket.createdAt)}
+                  responseCount={(ticket as any).responseCount || 0}
+                  onClick={() => setLocation(`/ticket/${ticket.id}`)}
+                />
+              </div>
             ))}
           </div>
         )}
       </div>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <CreateTicketForm
             onSubmit={(data) => createTicketMutation.mutate(data)}
             onCancel={() => setShowCreateDialog(false)}
