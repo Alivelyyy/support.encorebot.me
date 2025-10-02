@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -14,7 +15,9 @@ export async function sendVerificationEmail(
   token: string,
   fullName: string
 ): Promise<void> {
-  const baseUrl = process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
+  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+    : 'http://localhost:5000';
   const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
   
   const htmlBody = `
@@ -57,24 +60,33 @@ export async function sendVerificationEmail(
     </div>
   `;
 
-  const { data, error } = await supabase.functions.invoke('send-email', {
-    body: {
-      to: email,
-      from: 'EncoreBot Support <onboarding@resend.dev>',
-      subject: 'Verify your email address - EncoreBot Support',
-      html: htmlBody,
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    throw new Error('RESEND_API_KEY not configured in environment variables');
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${resendApiKey}`
     },
+    body: JSON.stringify({
+      from: 'EncoreBot Support <onboarding@resend.dev>',
+      to: email,
+      subject: 'Verify your email address - EncoreBot Support',
+      html: htmlBody
+    })
   });
 
-  if (error) {
-    console.error('Supabase email error:', error);
-    throw new Error(`Failed to send verification email: ${error.message}`);
+  if (!response.ok) {
+    const error = await response.json();
+    console.error('Resend API error:', error);
+    throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
   }
 
-  if (!data || data.error) {
-    console.error('Email sending failed:', data);
-    throw new Error('Failed to send verification email');
-  }
+  const data = await response.json();
+  console.log('Email sent successfully:', data);
 }
 
 export async function resendVerificationEmail(
