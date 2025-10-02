@@ -14,6 +14,19 @@ declare module 'express-session' {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Initialize admin email on startup
+  const initAdminEmail = async () => {
+    const adminEmail = "aliveisalive8354@gmail.com";
+    const existingAdmin = await storage.getAdminEmailByEmail(adminEmail);
+    if (!existingAdmin) {
+      await storage.createAdminEmail(adminEmail);
+      console.log(`Admin email ${adminEmail} added to whitelist`);
+    }
+  };
+  
+  // Run initialization
+  initAdminEmail().catch(console.error);
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {

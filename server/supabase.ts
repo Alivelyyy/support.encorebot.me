@@ -15,9 +15,10 @@ export async function sendVerificationEmail(
   token: string,
   fullName: string
 ): Promise<void> {
-  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-    : 'http://localhost:5000';
+  const baseUrl = process.env.BASE_URL || 
+    (process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+      : 'http://localhost:5000');
   const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
   
   const htmlBody = `
