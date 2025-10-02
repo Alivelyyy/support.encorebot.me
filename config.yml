@@ -4,7 +4,7 @@
 # Database Configuration
 # Replace with your MongoDB connection string (e.g., from MongoDB Atlas)
 database:
-  mongodb_uri: "mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@YOUR_CLUSTER.mongodb.net/?retryWrites=true&w=majority"
+  mongodb_uri: "mongodb+srv://svwpzi:2nwygk@cluster0.tidunfj.mongodb.net/?retryWrites=true&w=majority"
   db_name: "ticketsystem"
 
 # Server Configuration
@@ -15,9 +15,9 @@ server:
 # Email Configuration (Supabase + Resend)
 # Get these from your Supabase project and Resend account
 email:
-  supabase_url: "https://your-project.supabase.co"
-  supabase_anon_key: "your-supabase-anon-key-here"
-  resend_api_key: "re_your_resend_api_key_here"
+  supabase_url: "https://bmdjczrzluawslbjlazm.supabase.co"
+  supabase_anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtZGpjenJ6bHVhd3NsYmpsYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MDk1NTIsImV4cCI6MjA3NDk4NTU1Mn0.7BMkMJNelKUOc_cFvN8xXmHDEM--JIBBzE9CZQF9EZA"
+  resend_api_key: "re_egLsdFfp_3BdpuodTx2kuTkQdr4HJBmYo"
   base_url: "http://localhost:5000"  # Change to your production URL when deploying
 
 # Admin Configuration
