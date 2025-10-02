@@ -100,10 +100,13 @@ Three main tables:
 - TypeScript for type safety across the entire stack
 - ESBuild for server-side bundling in production
 
-**Email Service Integration** (Planned)
-- Email verification system designed to send from noreply@encorebot.me
-- HTML email templates for professional communication
-- Currently not implemented but infrastructure prepared
+**Email Service Integration**
+- Email verification system using Supabase Auth
+- Sends verification emails from verify@encorebot.me (configurable SMTP)
+- HTML email templates for professional verification flow
+- 24-hour token expiry with secure verification process
+- Users must verify email before accessing protected features
+- See SUPABASE_EMAIL_SETUP.md for complete configuration guide
 
 **Service Categories**
 The system supports two main service types with distinct categories:
