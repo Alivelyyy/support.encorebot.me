@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import { neon } from "@neondatabase/serverless";
+import mongoose from "mongoose";
+import { getConfig } from "./config";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -9,18 +9,25 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const PgSession = connectPgSimple(session);
-const pool = neon(process.env.DATABASE_URL!);
+// Load configuration
+const config = getConfig();
 
+// Connect to MongoDB
+mongoose.connect(config.database.mongodb_uri, {
+  dbName: config.database.db_name,
+}).then(() => {
+  log('Connected to MongoDB', 'database');
+}).catch((error) => {
+  console.error('MongoDB connection error:', error);
+  process.exit(1);
+});
+
+// Use memory store for sessions (compatible with serverless)
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "ticket-system-secret-key-change-in-production",
+    secret: config.server.session_secret,
     resave: false,
     saveUninitialized: false,
-    store: new PgSession({
-      pool: pool as any,
-      createTableIfMissing: true,
-    }),
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
@@ -82,7 +89,7 @@ app.use((req, res, next) => {
 
   // For local development
   if (process.env.NODE_ENV !== 'production') {
-    const port = parseInt(process.env.PORT || '5000', 10);
+    const port = config.server.port;
     server.listen({
       port,
       host: "0.0.0.0",

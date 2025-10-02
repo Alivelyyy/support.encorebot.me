@@ -1,24 +1,16 @@
-
 import { createClient } from '@supabase/supabase-js';
+import { getConfig } from './config';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const config = getConfig();
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(config.email.supabase_url, config.email.supabase_anon_key);
 
 export async function sendVerificationEmail(
   email: string,
   token: string,
   fullName: string
 ): Promise<void> {
-  const baseUrl = process.env.BASE_URL || 
-    (process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-      : 'http://localhost:5000');
+  const baseUrl = config.email.base_url;
   const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
   
   const htmlBody = `
@@ -108,10 +100,7 @@ export async function sendVerificationEmail(
     </html>
   `;
 
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY not configured in environment variables');
-  }
+  const resendApiKey = config.email.resend_api_key;
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -129,18 +118,12 @@ export async function sendVerificationEmail(
 
   if (!response.ok) {
     const error = await response.json();
-    console.error('Resend API error:', error);
-    throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
+    throw new Error(`Failed to send email: ${JSON.stringify(error)}`);
   }
 
-  const data = await response.json();
-  console.log('Email sent successfully:', data);
+  return;
 }
 
-export async function resendVerificationEmail(
-  email: string,
-  token: string,
-  fullName: string
-): Promise<void> {
+export async function resendVerificationEmail(email: string, fullName: string, token: string): Promise<void> {
   return sendVerificationEmail(email, token, fullName);
 }

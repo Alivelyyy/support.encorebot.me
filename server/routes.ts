@@ -5,6 +5,7 @@ import { insertUserSchema, insertTicketSchema, insertResponseSchema } from "@sha
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail, resendVerificationEmail } from "./supabase";
 import { randomBytes } from "crypto";
+import { getConfig } from "./config";
 
 declare module 'express-session' {
   interface SessionData {
@@ -13,10 +14,11 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  const config = getConfig();
   
   // Initialize admin email on startup
   const initAdminEmail = async () => {
-    const adminEmail = "aliveisalive8354@gmail.com";
+    const adminEmail = config.admin.default_email;
     const existingAdmin = await storage.getAdminEmailByEmail(adminEmail);
     if (!existingAdmin) {
       await storage.createAdminEmail(adminEmail);
