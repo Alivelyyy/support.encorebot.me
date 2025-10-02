@@ -1,73 +1,122 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+import mongoose from 'mongoose';
+import { z } from 'zod';
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  fullName: text("full_name").notNull(),
-  isAdmin: text("is_admin").notNull().default("false"),
-  emailVerified: text("email_verified").notNull().default("false"),
-  verificationToken: text("verification_token"),
-  verificationTokenExpiry: timestamp("verification_token_expiry"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// User Schema
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  fullName: { type: String, required: true },
+  isAdmin: { type: String, default: 'false' },
+  emailVerified: { type: String, default: 'false' },
+  verificationToken: { type: String },
+  verificationTokenExpiry: { type: Date },
+  createdAt: { type: Date, default: Date.now },
 });
 
-export const tickets = pgTable("tickets", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  category: text("category").notNull(),
-  service: text("service").notNull(),
-  status: text("status").notNull().default("open"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+// Ticket Schema
+const ticketSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  service: { type: String, required: true },
+  status: { type: String, default: 'open' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
-export const responses = pgTable("responses", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  ticketId: varchar("ticket_id").notNull().references(() => tickets.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  message: text("message").notNull(),
-  isStaff: text("is_staff").notNull().default("false"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// Response Schema
+const responseSchema = new mongoose.Schema({
+  ticketId: { type: mongoose.Schema.Types.ObjectId, ref: 'Ticket', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  message: { type: String, required: true },
+  isStaff: { type: String, default: 'false' },
+  createdAt: { type: Date, default: Date.now },
 });
 
-export const adminEmails = pgTable("admin_emails", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").notNull().unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// Admin Email Schema
+const adminEmailSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  createdAt: { type: Date, default: Date.now },
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
+// Models
+export const UserModel = mongoose.models.User || mongoose.model('User', userSchema);
+export const TicketModel = mongoose.models.Ticket || mongoose.model('Ticket', ticketSchema);
+export const ResponseModel = mongoose.models.Response || mongoose.model('Response', responseSchema);
+export const AdminEmailModel = mongoose.models.AdminEmail || mongoose.model('AdminEmail', adminEmailSchema);
+
+// Zod schemas for validation
+export const insertUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  fullName: z.string().min(1),
+  isAdmin: z.string().optional(),
+  emailVerified: z.string().optional(),
+  verificationToken: z.string().optional(),
+  verificationTokenExpiry: z.date().optional(),
 });
 
-export const insertTicketSchema = createInsertSchema(tickets).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertTicketSchema = z.object({
+  userId: z.string(),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  category: z.string(),
+  service: z.string(),
+  status: z.string().optional(),
 });
 
-export const insertResponseSchema = createInsertSchema(responses).omit({
-  id: true,
-  createdAt: true,
+export const insertResponseSchema = z.object({
+  ticketId: z.string(),
+  userId: z.string(),
+  message: z.string().min(1),
+  isStaff: z.string().optional(),
 });
 
-export const insertAdminEmailSchema = createInsertSchema(adminEmails).omit({
-  id: true,
-  createdAt: true,
+export const insertAdminEmailSchema = z.object({
+  email: z.string().email(),
 });
 
+// Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = {
+  id: string;
+  email: string;
+  password: string;
+  fullName: string;
+  isAdmin: string;
+  emailVerified: string;
+  verificationToken?: string;
+  verificationTokenExpiry?: Date;
+  createdAt: Date;
+};
+
 export type InsertTicket = z.infer<typeof insertTicketSchema>;
-export type Ticket = typeof tickets.$inferSelect;
+export type Ticket = {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  category: string;
+  service: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type InsertResponse = z.infer<typeof insertResponseSchema>;
-export type Response = typeof responses.$inferSelect;
+export type Response = {
+  id: string;
+  ticketId: string;
+  userId: string;
+  message: string;
+  isStaff: string;
+  createdAt: Date;
+};
+
 export type InsertAdminEmail = z.infer<typeof insertAdminEmailSchema>;
-export type AdminEmail = typeof adminEmails.$inferSelect;
+export type AdminEmail = {
+  id: string;
+  email: string;
+  createdAt: Date;
+};
