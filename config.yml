@@ -18,7 +18,7 @@ email:
   supabase_url: "https://bmdjczrzluawslbjlazm.supabase.co"
   supabase_anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtZGpjenJ6bHVhd3NsYmpsYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MDk1NTIsImV4cCI6MjA3NDk4NTU1Mn0.7BMkMJNelKUOc_cFvN8xXmHDEM--JIBBzE9CZQF9EZA"
   resend_api_key: "re_egLsdFfp_3BdpuodTx2kuTkQdr4HJBmYo"
-  base_url: "http://localhost:5000"  # Change to your production URL when deploying
+  base_url: "https://support.encorebot.me"  # Change to your production URL when deploying
 
 # Admin Configuration
 admin:
