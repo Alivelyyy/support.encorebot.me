@@ -1,0 +1,23 @@
+# Configuration file for the application
+# IMPORTANT: This file contains sensitive information and should not be committed to version control
+
+# Database Configuration
+database:
+  mongodb_uri: "mongodb://localhost:27017/ticketsystem"
+  db_name: "ticketsystem"
+
+# Server Configuration
+server:
+  port: 5000
+  session_secret: "ticket-system-secret-key-change-in-production"
+
+# Email Configuration (Supabase + Resend)
+email:
+  supabase_url: "https://placeholder.supabase.co"
+  supabase_anon_key: "placeholder-key"
+  resend_api_key: "placeholder-key"
+  base_url: "http://localhost:5000"
+
+# Admin Configuration
+admin:
+  default_email: "aliveisalive8354@gmail.com"

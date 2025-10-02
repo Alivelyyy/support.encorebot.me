@@ -1,0 +1,23 @@
+# Configuration file for the application
+# Copy this file to config.yml and fill in your actual values
+
+# Database Configuration
+database:
+  mongodb_uri: "mongodb+srv://username:password@cluster.mongodb.net/ticketsystem?retryWrites=true&w=majority"
+  db_name: "ticketsystem"
+
+# Server Configuration
+server:
+  port: 5000
+  session_secret: "your-secret-session-key-change-this-in-production"
+
+# Email Configuration (Supabase + Resend)
+email:
+  supabase_url: "https://your-project.supabase.co"
+  supabase_anon_key: "your-supabase-anon-key"
+  resend_api_key: "re_your_resend_api_key"
+  base_url: "http://localhost:5000"
+
+# Admin Configuration
+admin:
+  default_email: "aliveisalive8354@gmail.com"
