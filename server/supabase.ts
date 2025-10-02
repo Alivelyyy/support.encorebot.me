@@ -60,7 +60,7 @@ export async function sendVerificationEmail(
   const { data, error } = await supabase.functions.invoke('send-email', {
     body: {
       to: email,
-      from: 'verify@encorebot.me',
+      from: 'EncoreBot Support <onboarding@resend.dev>',
       subject: 'Verify your email address - EncoreBot Support',
       html: htmlBody,
     },
