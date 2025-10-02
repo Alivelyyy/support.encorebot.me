@@ -7,6 +7,9 @@ import {
   type InsertResponse
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from '../db';
+import { users, tickets, responses, adminEmails } from '@shared/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export interface IStorage {
   // User methods
@@ -14,18 +17,25 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Ticket methods
   getTicket(id: string): Promise<Ticket | undefined>;
   getAllTickets(): Promise<Ticket[]>;
   getTicketsByUserId(userId: string): Promise<Ticket[]>;
   createTicket(ticket: InsertTicket): Promise<Ticket>;
   updateTicketStatus(id: string, status: string): Promise<Ticket | undefined>;
-  
+
   // Response methods
   getResponsesByTicketId(ticketId: string): Promise<Response[]>;
   getResponseCountByTicketId(ticketId: string): Promise<number>;
   createResponse(response: InsertResponse): Promise<Response>;
+
+  // Admin email methods
+  getAllAdminEmails(): Promise<any[]>;
+  getAdminEmailByEmail(email: string): Promise<any | undefined>;
+  createAdminEmail(email: string): Promise<any>;
+  deleteAdminEmail(id: string): Promise<void>;
+  isAdminEmail(email: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -100,7 +110,7 @@ export class MemStorage implements IStorage {
   async updateTicketStatus(id: string, status: string): Promise<Ticket | undefined> {
     const ticket = this.tickets.get(id);
     if (!ticket) return undefined;
-    
+
     const updatedTicket: Ticket = {
       ...ticket,
       status,
@@ -118,22 +128,33 @@ export class MemStorage implements IStorage {
   }
 
   async getResponseCountByTicketId(ticketId: string): Promise<number> {
-    return Array.from(this.responses.values())
-      .filter((response) => response.ticketId === ticketId)
-      .length;
-  }
+    const result = await db.select().from(responses).where(eq(responses.ticketId, ticketId));
+    return result.length;
+  },
 
-  async createResponse(insertResponse: InsertResponse): Promise<Response> {
-    const id = randomUUID();
-    const response: Response = {
-      ...insertResponse,
-      id,
-      isStaff: insertResponse.isStaff || "false",
-      createdAt: new Date()
-    };
-    this.responses.set(id, response);
-    return response;
-  }
-}
+  // Admin email methods
+  async getAllAdminEmails() {
+    return await db.select().from(adminEmails).orderBy(desc(adminEmails.createdAt));
+  },
+
+  async getAdminEmailByEmail(email: string) {
+    const result = await db.select().from(adminEmails).where(eq(adminEmails.email, email));
+    return result[0];
+  },
+
+  async createAdminEmail(email: string) {
+    const result = await db.insert(adminEmails).values({ email }).returning();
+    return result[0];
+  },
+
+  async deleteAdminEmail(id: string) {
+    await db.delete(adminEmails).where(eq(adminEmails.id, id));
+  },
+
+  async isAdminEmail(email: string): Promise<boolean> {
+    const result = await db.select().from(adminEmails).where(eq(adminEmails.email, email));
+    return result.length > 0;
+  },
+};
 
 export const storage = new MemStorage();

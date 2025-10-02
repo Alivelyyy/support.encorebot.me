@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import FilterBar from "@/components/FilterBar";
 import StatsCard from "@/components/StatsCard";
 import TicketCard from "@/components/TicketCard";
+import AdminEmailManager from "@/components/AdminEmailManager";
 import { Ticket as TicketIcon, Clock, CheckCircle, Loader } from "lucide-react";
 import type { Ticket } from "@shared/schema";
 
@@ -105,6 +106,8 @@ export default function AdminPage() {
             description="Successfully resolved"
           />
         </div>
+
+        <AdminEmailManager />
 
         <div>
           <h2 className="text-2xl font-semibold mb-6">All Tickets</h2>

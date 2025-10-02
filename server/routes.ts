@@ -25,12 +25,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allUsers = await storage.getAllUsers();
       const isFirstUser = allUsers.length === 0;
 
+      // Check if email is in admin whitelist
+      const isAdminEmail = await storage.isAdminEmail(email);
+
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = await storage.createUser({
         email,
         password: hashedPassword,
         fullName,
-        isAdmin: isFirstUser ? "true" : "false"
+        isAdmin: (isFirstUser || isAdminEmail) ? "true" : "false"
       });
 
       req.session.userId = user.id;
@@ -233,6 +236,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
+  });
+
+  // Admin email management routes
+  app.get("/api/admin/emails", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const emails = await storage.getAllAdminEmails();
+    res.json({ emails });
+  });
+
+  app.post("/api/admin/emails", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ error: "Invalid email" });
+      }
+
+      const existing = await storage.getAdminEmailByEmail(email);
+      if (existing) {
+        return res.status(400).json({ error: "Email already in admin list" });
+      }
+
+      const adminEmail = await storage.createAdminEmail(email);
+      res.json({ adminEmail });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  app.delete("/api/admin/emails/:id", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isAdmin !== "true") {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    await storage.deleteAdminEmail(req.params.id);
+    res.json({ success: true });
   });
 
   const httpServer = createServer(app);

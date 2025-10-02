@@ -33,6 +33,12 @@ export const responses = pgTable("responses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const adminEmails = pgTable("admin_emails", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -49,9 +55,16 @@ export const insertResponseSchema = createInsertSchema(responses).omit({
   createdAt: true,
 });
 
+export const insertAdminEmailSchema = createInsertSchema(adminEmails).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertTicket = z.infer<typeof insertTicketSchema>;
 export type Ticket = typeof tickets.$inferSelect;
 export type InsertResponse = z.infer<typeof insertResponseSchema>;
 export type Response = typeof responses.$inferSelect;
+export type InsertAdminEmail = z.infer<typeof insertAdminEmailSchema>;
+export type AdminEmail = typeof adminEmails.$inferSelect;
