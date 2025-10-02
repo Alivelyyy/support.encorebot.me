@@ -2,21 +2,23 @@
 # IMPORTANT: This file contains sensitive information and should not be committed to version control
 
 # Database Configuration
+# Replace with your MongoDB connection string (e.g., from MongoDB Atlas)
 database:
-  mongodb_uri: "mongodb://localhost:27017/ticketsystem"
+  mongodb_uri: "mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@YOUR_CLUSTER.mongodb.net/?retryWrites=true&w=majority"
   db_name: "ticketsystem"
 
 # Server Configuration
 server:
   port: 5000
-  session_secret: "ticket-system-secret-key-change-in-production"
+  session_secret: "CHANGE-THIS-TO-A-SECURE-RANDOM-STRING-IN-PRODUCTION"
 
 # Email Configuration (Supabase + Resend)
+# Get these from your Supabase project and Resend account
 email:
-  supabase_url: "https://placeholder.supabase.co"
-  supabase_anon_key: "placeholder-key"
-  resend_api_key: "placeholder-key"
-  base_url: "http://localhost:5000"
+  supabase_url: "https://your-project.supabase.co"
+  supabase_anon_key: "your-supabase-anon-key-here"
+  resend_api_key: "re_your_resend_api_key_here"
+  base_url: "http://localhost:5000"  # Change to your production URL when deploying
 
 # Admin Configuration
 admin:

@@ -24,11 +24,7 @@ export interface Config {
 
 let cachedConfig: Config | null = null;
 
-export function loadConfig(): Config {
-  if (cachedConfig) {
-    return cachedConfig;
-  }
-
+function loadConfigFromFile(): Config {
   const configPath = path.join(process.cwd(), 'config.yml');
   
   if (!fs.existsSync(configPath)) {
@@ -39,11 +35,51 @@ export function loadConfig(): Config {
 
   try {
     const fileContents = fs.readFileSync(configPath, 'utf8');
-    cachedConfig = yaml.load(fileContents) as Config;
-    return cachedConfig;
+    return yaml.load(fileContents) as Config;
   } catch (error) {
     throw new Error(`Failed to load config.yml: ${error}`);
   }
+}
+
+function loadConfigFromEnv(): Config {
+  return {
+    database: {
+      mongodb_uri: process.env.MONGODB_URI || '',
+      db_name: process.env.DB_NAME || 'ticketsystem',
+    },
+    server: {
+      port: parseInt(process.env.PORT || '5000', 10),
+      session_secret: process.env.SESSION_SECRET || 'fallback-secret-change-this',
+    },
+    email: {
+      supabase_url: process.env.SUPABASE_URL || '',
+      supabase_anon_key: process.env.SUPABASE_ANON_KEY || '',
+      resend_api_key: process.env.RESEND_API_KEY || '',
+      base_url: process.env.BASE_URL || 'http://localhost:5000',
+    },
+    admin: {
+      default_email: process.env.ADMIN_EMAIL || 'admin@example.com',
+    },
+  };
+}
+
+export function loadConfig(): Config {
+  // In production (Vercel), always use environment variables
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    console.log('Loading configuration from environment variables (Vercel mode)');
+    return loadConfigFromEnv();
+  }
+
+  // In development, prefer environment variables if MONGODB_URI is set
+  // This allows both methods to work in development
+  if (process.env.MONGODB_URI) {
+    console.log('Loading configuration from environment variables');
+    return loadConfigFromEnv();
+  }
+
+  // Otherwise, try to load from config.yml
+  console.log('Loading configuration from config.yml');
+  return loadConfigFromFile();
 }
 
 export function getConfig(): Config {

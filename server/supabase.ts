@@ -1,15 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 import { getConfig } from './config';
 
-const config = getConfig();
+// Defer client creation until first use (lazy initialization for Vercel)
+let supabaseClient: ReturnType<typeof createClient> | null = null;
 
-export const supabase = createClient(config.email.supabase_url, config.email.supabase_anon_key);
+function getSupabaseClient() {
+  if (!supabaseClient) {
+    const config = getConfig();
+    supabaseClient = createClient(config.email.supabase_url, config.email.supabase_anon_key);
+  }
+  return supabaseClient;
+}
+
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get: (target, prop) => {
+    const client = getSupabaseClient();
+    return (client as any)[prop];
+  }
+});
 
 export async function sendVerificationEmail(
   email: string,
   token: string,
   fullName: string
 ): Promise<void> {
+  const config = getConfig(); // Access config at runtime, not import time
   const baseUrl = config.email.base_url;
   const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
   

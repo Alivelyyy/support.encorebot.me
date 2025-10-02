@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import session from "express-session";
+import cookieSession from "cookie-session";
 import mongoose from "mongoose";
 import { getConfig } from "./config";
 import { registerRoutes } from "./routes";
@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Load configuration
+// Load configuration (supports both config.yml and environment variables)
 const config = getConfig();
 
 // Connect to MongoDB
@@ -19,21 +19,22 @@ mongoose.connect(config.database.mongodb_uri, {
   log('Connected to MongoDB', 'database');
 }).catch((error) => {
   console.error('MongoDB connection error:', error);
-  process.exit(1);
+  // In serverless, we may not exit immediately - connection will retry
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });
 
-// Use memory store for sessions (compatible with serverless)
+// Use cookie-session for serverless compatibility (Vercel)
+// This stores session data in signed cookies instead of server memory
 app.use(
-  session({
-    secret: config.server.session_secret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    },
+  cookieSession({
+    name: 'session',
+    keys: [config.server.session_secret, config.server.session_secret + '-backup'],
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
   })
 );
 

@@ -7,8 +7,8 @@ import { sendVerificationEmail, resendVerificationEmail } from "./supabase";
 import { randomBytes } from "crypto";
 import { getConfig } from "./config";
 
-declare module 'express-session' {
-  interface SessionData {
+declare module 'cookie-session' {
+  interface CookieSessionObject {
     userId?: string;
   }
 }
