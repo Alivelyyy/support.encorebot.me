@@ -21,6 +21,9 @@ export interface IStorage {
   updateUserVerification(id: string, token: string, expiry: Date): Promise<User | undefined>;
   verifyUserEmail(token: string): Promise<User | undefined>;
   getUserByVerificationToken(token: string): Promise<User | undefined>;
+  updateUserResetToken(email: string, token: string, expiry: Date): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  resetUserPassword(token: string, hashedPassword: string): Promise<User | undefined>;
 
   // Ticket methods
   getTicket(id: string): Promise<Ticket | undefined>;
@@ -52,6 +55,8 @@ export class MongoStorage implements IStorage {
       id: (user._id as any).toString(),
       verificationToken: user.verificationToken || undefined,
       verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
     } as User;
   }
 
@@ -63,6 +68,8 @@ export class MongoStorage implements IStorage {
       id: (user._id as any).toString(),
       verificationToken: user.verificationToken || undefined,
       verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
     } as User;
   }
 
@@ -73,6 +80,8 @@ export class MongoStorage implements IStorage {
       id: (user._id as any).toString(),
       verificationToken: user.verificationToken || undefined,
       verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
     })) as User[];
   }
 
@@ -87,6 +96,8 @@ export class MongoStorage implements IStorage {
       id: user._id.toString(),
       verificationToken: user.verificationToken || undefined,
       verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
     } as User;
   }
 
@@ -102,6 +113,8 @@ export class MongoStorage implements IStorage {
       id: (user._id as any).toString(),
       verificationToken: user.verificationToken || undefined,
       verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
     } as User;
   }
 
@@ -135,6 +148,65 @@ export class MongoStorage implements IStorage {
       id: (user._id as any).toString(),
       verificationToken: user.verificationToken || undefined,
       verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
+    } as User;
+  }
+
+  async updateUserResetToken(email: string, token: string, expiry: Date): Promise<User | undefined> {
+    const user = await UserModel.findOneAndUpdate(
+      { email },
+      { resetToken: token, resetTokenExpiry: expiry },
+      { new: true }
+    ).lean();
+    if (!user) return undefined;
+    return {
+      ...user,
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
+    } as User;
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const user = await UserModel.findOne({ 
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() }
+    }).lean();
+    if (!user) return undefined;
+    return {
+      ...user,
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: user.resetToken || undefined,
+      resetTokenExpiry: user.resetTokenExpiry || undefined,
+    } as User;
+  }
+
+  async resetUserPassword(token: string, hashedPassword: string): Promise<User | undefined> {
+    const user = await UserModel.findOneAndUpdate(
+      { 
+        resetToken: token,
+        resetTokenExpiry: { $gt: new Date() }
+      },
+      { 
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      },
+      { new: true }
+    ).lean();
+    if (!user) return undefined;
+    return {
+      ...user,
+      id: (user._id as any).toString(),
+      verificationToken: user.verificationToken || undefined,
+      verificationTokenExpiry: user.verificationTokenExpiry || undefined,
+      resetToken: undefined,
+      resetTokenExpiry: undefined,
     } as User;
   }
 

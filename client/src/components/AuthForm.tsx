@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,7 +113,14 @@ export default function AuthForm({ onLogin, onSignup, onResendVerification, onCl
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password" data-testid="label-password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" data-testid="label-password">Password</Label>
+              {isLogin && (
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline" data-testid="link-forgot-password">
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <Input
               id="password"
               type="password"

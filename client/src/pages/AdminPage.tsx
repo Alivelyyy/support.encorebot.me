@@ -26,7 +26,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isUserLoading && !userData?.user) {
-      setLocation("/");
+      setLocation("/login");
     } else if (!isUserLoading && userData?.user && userData.user.isAdmin !== "true") {
       setLocation("/dashboard");
     }
@@ -38,7 +38,7 @@ export default function AdminPage() {
       return await res.json();
     },
     onSuccess: () => {
-      setLocation("/");
+      setLocation("/login");
     },
   });
 

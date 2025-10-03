@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   emailVerified: { type: String, default: 'false' },
   verificationToken: { type: String },
   verificationTokenExpiry: { type: Date },
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -55,6 +57,8 @@ export const insertUserSchema = z.object({
   emailVerified: z.string().optional(),
   verificationToken: z.string().optional(),
   verificationTokenExpiry: z.date().optional(),
+  resetToken: z.string().optional(),
+  resetTokenExpiry: z.date().optional(),
 });
 
 export const insertTicketSchema = z.object({
@@ -88,6 +92,8 @@ export type User = {
   emailVerified: string;
   verificationToken?: string;
   verificationTokenExpiry?: Date;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
   createdAt: Date;
 };
 

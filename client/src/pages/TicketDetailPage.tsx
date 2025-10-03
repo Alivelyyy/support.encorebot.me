@@ -36,7 +36,7 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     if (!isTicketLoading && !isResponsesLoading && !userData?.user) {
-      setLocation("/");
+      setLocation("/login");
     }
   }, [isTicketLoading, isResponsesLoading, userData, setLocation]);
 
@@ -91,7 +91,7 @@ export default function TicketDetailPage() {
       return await res.json();
     },
     onSuccess: () => {
-      setLocation("/");
+      setLocation("/login");
     },
   });
 

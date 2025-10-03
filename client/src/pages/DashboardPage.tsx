@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isUserLoading && !userData?.user) {
-      setLocation("/");
+      setLocation("/login");
     }
   }, [isUserLoading, userData, setLocation]);
 
@@ -40,7 +40,7 @@ export default function DashboardPage() {
       return await res.json();
     },
     onSuccess: () => {
-      setLocation("/");
+      setLocation("/login");
     },
   });
 

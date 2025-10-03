@@ -82,7 +82,7 @@ export default function VerifyEmailPage() {
                 {message}
               </p>
               <Button 
-                onClick={() => setLocation("/")}
+                onClick={() => setLocation("/login")}
                 className="mt-4"
                 data-testid="button-back-login"
               >
