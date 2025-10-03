@@ -26,7 +26,7 @@ let cachedConfig: Config | null = null;
 
 function loadConfigFromFile(): Config {
   const configPath = path.join(process.cwd(), 'config.yml');
-  
+
   if (!fs.existsSync(configPath)) {
     throw new Error(
       'config.yml not found. Please create one based on config.example.yml'
@@ -63,18 +63,21 @@ function loadConfigFromEnv(): Config {
   };
 }
 
-export function loadConfig(): Config {
-  // In production (Vercel), always use environment variables
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-    console.log('Loading configuration from environment variables (Vercel mode)');
-    return loadConfigFromEnv();
-  }
+// Renamed from loadConfig to getConfigFromEnv to avoid confusion with loadConfig
+function getConfigFromEnv(): Config {
+  return loadConfigFromEnv();
+}
 
-  // In development, prefer environment variables if MONGODB_URI is set
-  // This allows both methods to work in development
-  if (process.env.MONGODB_URI) {
-    console.log('Loading configuration from environment variables');
-    return loadConfigFromEnv();
+export function getConfig(): Config {
+  // Check if running on Vercel or similar serverless platform
+  // In these environments, we should use environment variables
+  const isServerless = process.env.VERCEL || 
+                       process.env.AWS_LAMBDA_FUNCTION_NAME || 
+                       process.env.NODE_ENV === 'production';
+
+  if (isServerless || process.env.MONGODB_URI) {
+    console.log('Using environment variables for configuration');
+    return getConfigFromEnv();
   }
 
   // Otherwise, try to load from config.yml
@@ -82,9 +85,9 @@ export function loadConfig(): Config {
   return loadConfigFromFile();
 }
 
-export function getConfig(): Config {
+export function getConfiguration(): Config {
   if (!cachedConfig) {
-    cachedConfig = loadConfig();
+    cachedConfig = getConfig();
   }
   return cachedConfig;
 }

@@ -79,12 +79,13 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup routes first, then static files/vite
+  // This ensures API routes take precedence over static file serving
+  
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
+    // In production, serve static files
     serveStatic(app);
   }
 

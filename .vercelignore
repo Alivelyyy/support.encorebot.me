@@ -1,13 +1,9 @@
 node_modules
 .git
-client
 supabase
 attached_assets
 *.md
 .replit
 replit.nix
-tsconfig.json
-vite.config.ts
-tailwind.config.ts
-postcss.config.js
 config.example.yml
+config.yml
