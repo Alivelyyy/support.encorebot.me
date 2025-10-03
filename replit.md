@@ -1,8 +1,8 @@
-# Support Ticket System for EncoreBot & Team Epic
+# Support Ticket System for Team Epic Services
 
 ## Overview
 
-This is a professional support ticket management system designed for Team Epic and EncoreBot services. The application provides a complete ticketing solution where users can submit support requests across multiple service categories, and administrators can manage and respond to tickets through a dedicated admin panel. Built with a modern dark theme featuring purple/blue gradients matching Team Epic's branding, the system uses a full-stack TypeScript architecture with React on the frontend and Express on the backend.
+This is a professional support ticket management system designed for Team Epic's complete service portfolio including websites, Discord bots (including EncoreBot), Roblox games, and graphic design. The application provides a complete ticketing solution where users can submit support requests across multiple service categories, and administrators can manage and respond to tickets through a dedicated admin panel. Built with a modern dark theme featuring purple/blue gradients matching Team Epic's branding, the system uses a full-stack TypeScript architecture with React on the frontend and Express on the backend.
 
 ## User Preferences
 
