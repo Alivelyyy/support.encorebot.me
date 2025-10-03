@@ -21,11 +21,14 @@ export default function LoginPage() {
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
-      if (data.user?.isAdmin === "true") {
-        setLocation("/admin");
-      } else {
-        setLocation("/dashboard");
-      }
+      // Small delay to ensure session is established
+      setTimeout(() => {
+        if (data.user?.isAdmin === "true") {
+          setLocation("/admin");
+        } else {
+          setLocation("/dashboard");
+        }
+      }, 100);
     },
     onError: (error: any) => {
       if (error.requiresVerification) {
