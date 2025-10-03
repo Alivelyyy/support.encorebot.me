@@ -1,0 +1,61 @@
+
+Search
+
+Live tail
+GMT+5:30
+
+Menu
+
+==> Downloading cache...
+==> Cloning from https://github.com/Alivelyyy/support.encorebot.me
+==> Checking out commit fff4fb8bb0c7dc06346b6e6995ef33d60a1c467a in branch main
+==> Transferred 192MB in 7s. Extraction took 5s.
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+up to date, audited 494 packages in 1s
+65 packages are looking for funding
+  run `npm fund` for details
+5 vulnerabilities (3 low, 2 moderate)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+vite v5.4.20 building for production...
+transforming...
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 2045 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                   0.89 kB │ gzip:   0.49 kB
+../dist/public/assets/index-_PfPLlBi.css   81.04 kB │ gzip:  13.13 kB
+../dist/public/assets/index-CRfWu_Mo.js   696.17 kB │ gzip: 195.69 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.24s
+  dist/index.js  41.9kb
+⚡ Done in 6ms
+==> Uploading build...
+==> Uploaded in 5.1s. Compression took 16.9s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+Loading configuration from environment variables (Vercel mode)
+2:26:11 PM [express] serving on port 10000
+2:26:12 PM [database] Connected to MongoDB
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://support.encorebot.me + 1 more domain
+==> 
+==> ///////////////////////////////////////////////////////////
+2:26:50 PM [express] POST /api/auth/login 200 in 818ms :: {"user":{"id":"68de8c8efec1d37b44924271","…
+2:26:51 PM [express] GET /api/auth/me 401 in 2ms :: {"error":"Not authenticated"}
