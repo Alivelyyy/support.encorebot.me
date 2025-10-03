@@ -1,6 +1,6 @@
 import AuthForm from "@/components/AuthForm";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -17,11 +17,12 @@ export default function LoginPage() {
     },
     onSuccess: (data: any) => {
       setUnverifiedEmail(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
-      // Small delay to ensure session is established
       setTimeout(() => {
         if (data.user?.isAdmin === "true") {
           setLocation("/admin");

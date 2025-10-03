@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function VerifyEmailPage() {
   const [, setLocation] = useLocation();
@@ -27,6 +27,9 @@ export default function VerifyEmailPage() {
         
         setStatus("success");
         setMessage(data.message || "Email verified successfully!");
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
         
         setTimeout(() => {
           if (data.user?.isAdmin === "true") {
